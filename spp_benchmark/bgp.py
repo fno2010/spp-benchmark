@@ -2,7 +2,7 @@
 
 def advertise(G, curr, nhop, p):
     if G.node[nhop]['as'].import_filter(p):
-        G.node[nhop]['as'].unannounced_rib.add(p)
+        G.node[nhop]['as'].unannounced_rib.append(p)
 
 def bgp_advertise(G):
     for n in G.nodes():
