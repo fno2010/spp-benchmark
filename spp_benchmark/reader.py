@@ -127,6 +127,7 @@ def example_topology():
     dg.add_edge(7, 5, relationship='pc')
     dg.add_edge(6, 7, relationship='cp')
     dg.add_edge(7, 6, relationship='pc')
+
     dg.node[0]['as'] = CustomerProviderAS(0, dst=0, providers={1, 2, 3})
     dg.node[1]['as'] = CustomerProviderAS(1, dst=0, customers={0}, providers={2, 3, 4})
     dg.node[2]['as'] = CustomerProviderAS(2, dst=0, customers={0, 1}, providers={3, 4})
@@ -135,4 +136,6 @@ def example_topology():
     dg.node[5]['as'] = CustomerProviderAS(5, dst=0, customers={6}, providers={3, 7})
     dg.node[6]['as'] = CustomerProviderAS(6, dst=0, providers={3, 5, 7})
     dg.node[7]['as'] = CustomerProviderAS(7, dst=0, customers={5, 6}, peers={3})
+
+    dg.node[dg.dst]['as'].unannounced_rib.append((dg.dst,))
     return dg
