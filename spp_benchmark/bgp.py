@@ -16,7 +16,8 @@ def bgp_advertise(G):
                     advertise(G, n, d, pp)
             announced_rib.append(p)
 
-def bgp_sim(G, iter_num=20):
+def bgp_sim(G, iter_num=20, verbose=False):
     for i in range(iter_num):
-        print(i)
+        if verbose:
+            print(i)
         bgp_advertise(G)
