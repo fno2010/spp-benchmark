@@ -49,7 +49,7 @@ class AutonomousSystem(object):
         return c_local_pref
 
     def path_score(self, p):
-        return (self.local_pref(p), len(p), p[-2] if len(p) > 2 else 0)
+        return (self.local_pref(p), -len(p), p[-2] if len(p) > 2 else 0)
 
     def ranked_permitted_paths(self):
         return sorted(self.permitted_paths(), key=lambda p: self.path_score(p), reverse=True)

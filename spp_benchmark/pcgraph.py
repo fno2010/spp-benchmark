@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import igraph
 import networkx
 
 TYPE_PREFERENCE = 0
@@ -11,6 +12,15 @@ def prefix_match(path1, path2):
     check if path1 is a prefix of path2
     """
     return path1 == path2[:len(path1)]
+
+def compatible_with_path_assign(p, pi):
+    """
+    check if path p is compatible with the path assignment pi
+    """
+    for _, pv in pi.items():
+        if prefix_match(pv, p) and pi.keys().isdisjoint(p[len(pv):]):
+            return True
+    return False
 
 class PCGraph(networkx.MultiDiGraph):
 
@@ -28,8 +38,9 @@ class PCGraph(networkx.MultiDiGraph):
         for asn in self.topo.nodes():
             as_paths = []
             for p in self.topo.node[asn]['as'].ranked_permitted_paths():
+                # self.add_node(p)
                 for pp in as_paths:
-                    self.add_edge(pp, p, type=TYPE_PREFERENCE)
+                    self.add_edge(p, pp, type=TYPE_PREFERENCE)
                 as_paths.append(p)
             for p in as_paths:
                 for pp in all_paths:
@@ -63,9 +74,37 @@ class BasePCGraphSolver(object):
         """
         _pcgraph = pcgraph or self.pcgraph
         if isinstance(_pcgraph, networkx.Graph):
-            return networkx.algorithms.mis.maximal_independent_set(networkx.Graph(self.pcgraph))
+            _pg = networkx.Graph(_pcgraph)
+            _g = networkx.relabel.convert_node_labels_to_integers(_pg, label_attribute='path')
+            ig = igraph.Graph(len(_g), list(_g.edges()))
+            mis = ig.largest_independent_vertex_sets()
+            if mis:
+                return [(0,)] + [_g.node[v]['path'] for v in mis[0]]
         else:
             return
+
+class GreedySolver(BasePCGraphSolver):
+
+    def solve(self, pcgraph=None):
+        _pcgraph = pcgraph or self.pcgraph
+        _topo = _pcgraph.topo
+        P = {v:_topo.node[v]['as'].ranked_permitted_paths() for v in _topo.nodes()}
+        pi = {_topo.dst: (_topo.dst,)}
+        found = True
+        while len(pi) < len(P) and found:
+            found = False
+            for v in P.keys():
+                if v in pi.keys():
+                    continue
+                pv = None
+                for p in P[v]:
+                    if compatible_with_path_assign(p, pi):
+                        pv = p
+                        break
+                if len(pv) > 1 and (pv[-2] in pi.keys()):
+                    pi[v] = pv
+                    found = True
+        return list(pi.values())
 
 class GreedyPPGraphSolver(BasePCGraphSolver):
 
@@ -105,6 +144,9 @@ if __name__ == '__main__':
     pcg.build()
     baseline_solver = BasePCGraphSolver(pcg)
     s = baseline_solver.solve()
+    print(s)
+    greedy_solver = GreedySolver(pcg)
+    s = greedy_solver.solve()
     print(s)
     greedypp_solver = GreedyPPGraphSolver(pcg)
     s = greedypp_solver.solve()
