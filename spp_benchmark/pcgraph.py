@@ -48,7 +48,7 @@ class PCGraph(networkx.MultiDiGraph):
         for asn in self.topo.nodes():
             as_paths = []
             for p in self.topo.node[asn]['as'].ranked_permitted_paths():
-                # self.add_node(p)
+                self.add_node(p)
                 for pp in as_paths:
                     self.add_edge(p, pp, type=TYPE_PREFERENCE)
                 as_paths.append(p)
@@ -70,6 +70,7 @@ class PCGraph(networkx.MultiDiGraph):
                         if p == pp[:-1]:
                             for cp in self.predecessors(pp):
                                 self.add_edge(cp, p, type=TYPE_CONFLICT_II)
+            all_paths.extend(as_paths)
 
 class BasePCGraphSolver(object):
 
@@ -158,7 +159,7 @@ class GreedyPPGraphSolver(BasePCGraphSolver):
         import itertools
         _pcgraph = pcgraph or self.pcgraph
         asnum = len(_pcgraph.topo.nodes())
-        s = [(_pcgraph.topo.dst,)]
+        s = []
         g = _pcgraph.copy()
         while len(s) < asnum and len(g.nodes()) > 0:
             # nodes with zero out degree

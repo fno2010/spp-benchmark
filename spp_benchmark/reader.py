@@ -139,3 +139,13 @@ def example_topology():
 
     dg.node[dg.dst]['as'].unannounced_rib.append((dg.dst,))
     return dg
+
+def example_pcg():
+    from spp_benchmark.bgp import bgp_sim
+    from spp_benchmark.pcgraph import PCGraph
+    topo = example_topology()
+    bgp_sim(topo)
+    pcg = PCGraph()
+    pcg.load(topo)
+    pcg.build()
+    return pcg
