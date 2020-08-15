@@ -22,6 +22,16 @@ def compatible_with_path_assign(p, pi):
             return True
     return False
 
+def consistent_path(p, pset):
+    """
+    check if p is consistent with pset
+    """
+    if len(p) < 2:
+        return True
+    if (p in pset) and consistent_path(p[:-1], pset):
+        return True
+    return False
+
 class PCGraph(networkx.MultiDiGraph):
 
     def __init__(self):
@@ -106,6 +116,42 @@ class GreedySolver(BasePCGraphSolver):
                     found = True
         return list(pi.values())
 
+class GreedyPlusSolver(BasePCGraphSolver):
+
+    def solve(self, pcgraph=None):
+        _pcgraph = pcgraph or self.pcgraph
+        _topo = _pcgraph.topo
+        P = {v:_topo.node[v]['as'].ranked_permitted_paths() for v in _topo.nodes()}
+        V = list(P.keys())
+        V.remove(_topo.dst)
+        Vi = [_topo.dst]
+        while V:
+            for v in V:
+                for u in Vi:
+                    if len(P[u]) == 1:
+                        p = P[u][0]
+                        try:
+                            idx = P[v].index(p+(v,))
+                            P[v][idx+1:] = []
+                        except ValueError:
+                            pass
+            Pall = sum(P.values(), [])
+            for v in V:
+                Pv = P[v]
+                P[v] = [p for p in Pv if consistent_path(p, Pall)]
+            c = None
+            for v in V:
+                if not P[v] or (len(P[v][0]) > 1 and (P[v][0][-2] in Vi)):
+                    P[v] = P[v][:1]
+                    c = v
+                    break
+            if c:
+                V.remove(c)
+                Vi.append(c)
+            else:
+                break
+        return [P[v][0] for v in Vi if P[v]]
+
 class GreedyPPGraphSolver(BasePCGraphSolver):
 
     def solve(self, pcgraph=None):
@@ -142,11 +188,14 @@ if __name__ == '__main__':
     pcg = PCGraph()
     pcg.load(topo)
     pcg.build()
-    baseline_solver = BasePCGraphSolver(pcg)
-    s = baseline_solver.solve()
-    print(s)
+    # baseline_solver = BasePCGraphSolver(pcg)
+    # s = baseline_solver.solve()
+    # print(s)
     greedy_solver = GreedySolver(pcg)
     s = greedy_solver.solve()
+    print(s)
+    greedyp_solver = GreedyPlusSolver(pcg)
+    s = greedyp_solver.solve()
     print(s)
     greedypp_solver = GreedyPPGraphSolver(pcg)
     s = greedypp_solver.solve()
