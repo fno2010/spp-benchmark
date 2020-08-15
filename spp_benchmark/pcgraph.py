@@ -87,7 +87,7 @@ class BasePCGraphSolver(object):
         Solve the input pcgraph or initial pcgraph
         """
         _pcgraph = pcgraph or self.pcgraph
-        return self.solve(_pcgraph)
+        return self._solve(_pcgraph)
 
 class NaivePCGraphSolver(BasePCGraphSolver):
 
