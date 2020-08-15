@@ -167,7 +167,6 @@ class GreedyPPGraphSolver(BasePCGraphSolver):
 
     def _solve(self, _pcgraph):
         import itertools
-        _pcgraph = pcgraph or self.pcgraph
         asnum = len(_pcgraph.topo.nodes())
         s = []
         g = _pcgraph.copy()
