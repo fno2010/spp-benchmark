@@ -161,12 +161,15 @@ class GreedyPPGraphSolver(BasePCGraphSolver):
         s = [(_pcgraph.topo.dst,)]
         g = _pcgraph.copy()
         while len(s) < asnum and len(g.nodes()) > 0:
+            # nodes with zero out degree
             b = [n for n in g.nodes() if g.out_degree(n) == 0]
             if not b:
+                # nodes with no preference edge
                 b = [n for n in g.nodes()
-                     if any([e[2] != TYPE_PREFERENCE for e in g.out_edges(n, data='type')])
-                     and any([e[2] != TYPE_PREFERENCE for e in g.in_edges(n, data)])]
+                     if all([e[2] != TYPE_PREFERENCE for e in g.out_edges(n, data='type')])
+                     and all([e[2] != TYPE_PREFERENCE for e in g.in_edges(n, data='type')])]
             if not b:
+                # nodes with lowest out degree
                 b = min([(k[0], [n[0] for n in k[1]])
                          for k in itertools.groupby(dict(g.out_degree()).items(),
                                                     key=lambda d: d[1])],
