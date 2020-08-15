@@ -76,7 +76,7 @@ class BasePCGraphSolver(object):
 
     def __init__(self, pcgraph=None):
         self.pcgraph = pcgraph
-    
+
     def solve(self, pcgraph=None):
         """
         Find a max independent set.
@@ -175,12 +175,16 @@ class GreedyPPGraphSolver(BasePCGraphSolver):
                          for k in itertools.groupby(dict(g.out_degree()).items(),
                                                     key=lambda d: d[1])],
                         key=lambda d: d[0])[1]
-            g_old = g
-            g = g_old.copy()
+            # g_old = g
+            # g = g_old.copy()
+            # avoid graph copy
+            neighs = dict()
             for n in b:
-                neighs = g_old.neighbors(n)
+                neighs[n] = list(g.neighbors(n))
+            for n in b:
+                # neighs = g_old.neighbors(n)
                 g.remove_node(n)
-                g.remove_nodes_from(neighs)
+                g.remove_nodes_from(neighs[n])
             s.extend(b)
         return s
 
