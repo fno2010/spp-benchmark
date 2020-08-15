@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import igraph
 import networkx
 
 TYPE_PREFERENCE = 0
@@ -76,15 +75,28 @@ class BasePCGraphSolver(object):
 
     def __init__(self, pcgraph=None):
         self.pcgraph = pcgraph
+    
+    def _solve(self, _pcgraph):
+        """
+        Override this method by your own implementation.
+        """
+        return
 
     def solve(self, pcgraph=None):
         """
-        Find a max independent set.
-
-        Override this method by your own implementation.
+        Solve the input pcgraph or initial pcgraph
         """
         _pcgraph = pcgraph or self.pcgraph
+        return self.solve(_pcgraph)
+
+class NaivePCGraphSolver(BasePCGraphSolver):
+
+    def _solve(self, _pcgraph):
+        """
+        Find a max independent set.
+        """
         if isinstance(_pcgraph, networkx.Graph):
+            import igraph
             _pg = networkx.Graph(_pcgraph)
             _g = networkx.relabel.convert_node_labels_to_integers(_pg, label_attribute='path')
             ig = igraph.Graph(len(_g), list(_g.edges()))
@@ -96,8 +108,7 @@ class BasePCGraphSolver(object):
 
 class GreedySolver(BasePCGraphSolver):
 
-    def solve(self, pcgraph=None):
-        _pcgraph = pcgraph or self.pcgraph
+    def _solve(self, _pcgraph):
         _topo = _pcgraph.topo
         P = {v:_topo.node[v]['as'].ranked_permitted_paths() for v in _topo.nodes()}
         pi = {_topo.dst: (_topo.dst,)}
@@ -119,8 +130,7 @@ class GreedySolver(BasePCGraphSolver):
 
 class GreedyPlusSolver(BasePCGraphSolver):
 
-    def solve(self, pcgraph=None):
-        _pcgraph = pcgraph or self.pcgraph
+    def _solve(self, _pcgraph):
         _topo = _pcgraph.topo
         P = {v:_topo.node[v]['as'].ranked_permitted_paths() for v in _topo.nodes()}
         V = list(P.keys())
@@ -155,7 +165,7 @@ class GreedyPlusSolver(BasePCGraphSolver):
 
 class GreedyPPGraphSolver(BasePCGraphSolver):
 
-    def solve(self, pcgraph=None):
+    def _solve(self, _pcgraph):
         import itertools
         _pcgraph = pcgraph or self.pcgraph
         asnum = len(_pcgraph.topo.nodes())

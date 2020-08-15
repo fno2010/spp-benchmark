@@ -6,7 +6,7 @@ from spp_benchmark.reader import TopologyReader, set_dst
 from spp_benchmark.pcgraph import PCGraph, GreedySolver, GreedyPlusSolver, GreedyPPGraphSolver
 from spp_benchmark.bgp import bgp_sim
 
-def test_country(topo, cc):
+def test_country(topo, cc, solvers):
     dst = random.choice(list(topo.nodes()))
     set_dst(topo, dst)
     print('[[[ Country: %s, ASes: %d, Edges: %d, Dest: %d ]]]' % (cc, len(topo.nodes), len(topo.edges), dst))
@@ -16,12 +16,9 @@ def test_country(topo, cc):
         pcg.load(topo)
         pcg.build()
         print('[[ SolverGraph: (Paths: %d, Edges: %d) ]]' % (len(pcg.nodes), len(pcg.edges)))
-        s = gsolver.solve()
-        print('Greedy:', s)
-        s = gpsolver.solve()
-        print('Greedy+:', s)
-        s = gppsolver.solve()
-        print('Greedy++:', s)
+        for solver in solvers:
+            s = solvers[solver].solve(pcg)
+            print(solver, ':', s)
     print()
 
 
@@ -35,8 +32,20 @@ if __name__ == '__main__':
     gsolver = GreedySolver()
     gpsolver = GreedyPlusSolver()
     gppsolver = GreedyPPGraphSolver()
+    solvers = {
+        'Greedy': gsolver,
+        'Greedy+': gpsolver,
+        'Greedy++': gppsolver
+    }
 
-    countries = [cc for cc, al in reversed(topo_reader.country_stat()) if al < 50]
-    for cc in countries:
+    if len(sys.argv) > 3:
+        cc = sys.argv[3]
         topo = topo_reader.get_subtopo_by_country(cc)
-        test_country(topo, cc)
+        if len(topo):
+            test_country(topo, cc, solvers)
+    else:
+        countries = [cc for cc, al in reversed(topo_reader.country_stat()) if al < 50]
+        for cc in countries:
+            topo = topo_reader.get_subtopo_by_country(cc)
+            if len(topo):
+                test_country(topo, cc, solvers)
