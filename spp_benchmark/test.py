@@ -16,7 +16,7 @@ def test_country(topo, cc, solvers, dst=None, save_dir=None):
     result['country'] = cc
     result['nodes'] = len(topo.nodes)
     result['edges'] = len(topo.edges)
-    succ = bgp_sim(topo, iter_num=50, anno_num=5000)
+    succ = bgp_sim(topo, anno_num=5000)
     if succ:
         pcg = PCGraph()
         pcg.load(topo)
@@ -64,8 +64,8 @@ if __name__ == '__main__':
         if len(topo):
             test_country(topo, cc, solvers, dst=dst)
     else:
-        countries = [cc for cc, al in reversed(topo_reader.country_stat()) if 5 < al < 50]
+        countries = [cc for cc, al in reversed(topo_reader.country_stat()) if 50 <= al < 100]
         for cc in countries:
             topo = topo_reader.get_subtopo_by_country(cc, maximum=True)
             if len(topo):
-                test_country(topo, cc, solvers, save_dir='pickle')
+                test_country(topo, cc, solvers, save_dir='pickle2')
