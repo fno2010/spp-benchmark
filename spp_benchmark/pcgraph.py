@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import time
 import networkx
 
 TYPE_PREFERENCE = 0
@@ -54,42 +55,64 @@ class PCGraph(networkx.MultiDiGraph):
             for p in as_paths:
                 for pp in all_paths:
                     if prefix_match(pp, p):
-                        for cp in self.successors(pp):
-                            self.add_edge(p, cp, type=TYPE_CONFLICT_I)
-                        for cp in self.predecessors(pp):
-                            self.add_edge(p, cp, type=TYPE_CONFLICT_I)
+                        for _, cp, t in self.out_edges(pp, data='type'):
+                            if t == TYPE_PREFERENCE:
+                                self.add_edge(p, cp, type=TYPE_CONFLICT_I)
+                        for cp, _, t in self.in_edges(pp, data='type'):
+                            if t == TYPE_PREFERENCE:
+                                self.add_edge(p, cp, type=TYPE_CONFLICT_I)
                         if pp == p[:-1]:
-                            for cp in self.predecessors(p):
-                                self.add_edge(cp, pp, type=TYPE_CONFLICT_II)
+                            for _, cp, t in self.out_edges(p, data='type'):
+                                if t == TYPE_PREFERENCE:
+                                    self.add_edge(cp, pp, type=TYPE_CONFLICT_II)
                     elif prefix_match(p, pp):
-                        for cp in self.successors(p):
-                            self.add_edge(pp, cp, type=TYPE_CONFLICT_I)
-                        for cp in self.predecessors(p):
-                            self.add_edge(pp, cp, type=TYPE_CONFLICT_I)
+                        for _, cp, t in self.out_edges(p, data='type'):
+                            if t == TYPE_PREFERENCE:
+                                self.add_edge(pp, cp, type=TYPE_CONFLICT_I)
+                        for cp, _, t in self.in_edges(p, data='type'):
+                            if t == TYPE_PREFERENCE:
+                                self.add_edge(pp, cp, type=TYPE_CONFLICT_I)
                         if p == pp[:-1]:
-                            for cp in self.predecessors(pp):
-                                self.add_edge(cp, p, type=TYPE_CONFLICT_II)
+                            for _, cp, t in self.out_edges(pp, data='type'):
+                                if t == TYPE_PREFERENCE:
+                                    self.add_edge(cp, p, type=TYPE_CONFLICT_II)
             all_paths.extend(as_paths)
 
 class BasePCGraphSolver(object):
 
     def __init__(self, pcgraph=None):
         self.pcgraph = pcgraph
+        self.timer = None
+        self.timing = False
 
-    def _solve(self, _pcgraph):
+    def _solve(self, _pcgraph, enable_timer=False):
         """
         Override this method by your own implementation.
         """
-        return
+        return []
 
-    def solve(self, pcgraph=None):
+    def solve(self, pcgraph=None, enable_timer=False):
         """
         Solve the input pcgraph or initial pcgraph
         """
         _pcgraph = pcgraph or self.pcgraph
-        s = self._solve(_pcgraph)
+        s = self._solve(_pcgraph, enable_timer)
         succ = len(s) == len(_pcgraph.topo)
-        return s, succ
+        return s, succ, self.reset_timer()
+    
+    def reset_timer(self):
+        t = self.timer
+        self.timer = None # reset
+        return t
+    
+    def _start_timer(self):
+        self.timer = time.time()
+        self.timing = True
+    
+    def _end_timer(self):
+        if self.timing:
+            self.timer = time.time() - self.timer
+            self.timing = False
 
 class NaivePCGraphSolver(BasePCGraphSolver):
 
@@ -110,7 +133,9 @@ class NaivePCGraphSolver(BasePCGraphSolver):
 
 class GreedySolver(BasePCGraphSolver):
 
-    def _solve(self, _pcgraph):
+    def _solve(self, _pcgraph, enable_timer=False):
+        if enable_timer:
+            self._start_timer()
         _topo = _pcgraph.topo
         P = {v:_topo.node[v]['as'].ranked_permitted_paths() for v in _topo.nodes()}
         pi = {_topo.dst: (_topo.dst,)}
@@ -128,11 +153,15 @@ class GreedySolver(BasePCGraphSolver):
                 if len(pv) > 1 and (pv[-2] in pi.keys()):
                     pi[v] = pv
                     found = True
+        if enable_timer:
+            self._end_timer()
         return list(pi.values())
 
 class GreedyPlusSolver(BasePCGraphSolver):
 
-    def _solve(self, _pcgraph):
+    def _solve(self, _pcgraph, enable_timer=False):
+        if enable_timer:
+            self._start_timer()
         _topo = _pcgraph.topo
         P = {v:_topo.node[v]['as'].ranked_permitted_paths() for v in _topo.nodes()}
         V = list(P.keys())
@@ -163,15 +192,19 @@ class GreedyPlusSolver(BasePCGraphSolver):
                 Vi.append(c)
             else:
                 break
+        if enable_timer:
+            self._end_timer()
         return [P[v][0] for v in Vi if P[v]]
 
 class GreedyPPGraphSolver(BasePCGraphSolver):
 
-    def _solve(self, _pcgraph):
+    def _solve(self, _pcgraph, enable_timer=False):
         import itertools
         asnum = len(_pcgraph.topo.nodes())
         s = []
         g = _pcgraph.copy()
+        if enable_timer:
+            self._start_timer()
         while len(s) < asnum and len(g.nodes()) > 0:
             # nodes with zero out degree
             b = [n for n in g.nodes() if g.out_degree(n) == 0]
@@ -188,14 +221,16 @@ class GreedyPPGraphSolver(BasePCGraphSolver):
                         key=lambda d: d[0])[1]
             # g_old = g
             # g = g_old.copy()
-            # avoid graph copy
+            # avoid graph copy to reduce memory
             neighs = dict()
             for n in b:
-                neighs[n] = list(g.neighbors(n))
+                neighs[n] = list(g.successors(n)) + list(g.predecessors(n))
             for n in b:
                 # neighs = g_old.neighbors(n)
                 g.remove_nodes_from(neighs[n]+[n])
             s.extend(b)
+        if enable_timer:
+            self._end_timer()
         return s
 
 if __name__ == '__main__':

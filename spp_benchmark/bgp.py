@@ -23,7 +23,7 @@ def bgp_advertise(G, anno_cnt=0, anno_num=None):
             announced_rib.append(p)
             if received:
                 new_anno_cnt += 1
-                if new_anno_cnt >= anno_num:
+                if (anno_num is not None) and (new_anno_cnt >= anno_num):
                     stop = True
                     break
         if stop:
