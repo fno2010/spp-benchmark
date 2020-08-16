@@ -75,7 +75,7 @@ class BasePCGraphSolver(object):
 
     def __init__(self, pcgraph=None):
         self.pcgraph = pcgraph
-    
+
     def _solve(self, _pcgraph):
         """
         Override this method by your own implementation.
@@ -87,7 +87,9 @@ class BasePCGraphSolver(object):
         Solve the input pcgraph or initial pcgraph
         """
         _pcgraph = pcgraph or self.pcgraph
-        return self._solve(_pcgraph)
+        s = self._solve(_pcgraph)
+        succ = len(s) == len(_pcgraph.topo)
+        return s, succ
 
 class NaivePCGraphSolver(BasePCGraphSolver):
 
@@ -192,8 +194,7 @@ class GreedyPPGraphSolver(BasePCGraphSolver):
                 neighs[n] = list(g.neighbors(n))
             for n in b:
                 # neighs = g_old.neighbors(n)
-                g.remove_node(n)
-                g.remove_nodes_from(neighs[n])
+                g.remove_nodes_from(neighs[n]+[n])
             s.extend(b)
         return s
 

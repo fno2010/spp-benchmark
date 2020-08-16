@@ -17,8 +17,8 @@ def test_country(topo, cc, solvers):
         pcg.build()
         print('[[ SolverGraph: (Paths: %d, Edges: %d) ]]' % (len(pcg.nodes), len(pcg.edges)))
         for solver in solvers:
-            s = solvers[solver].solve(pcg)
-            print(solver, ':', s)
+            s, succ = solvers[solver].solve(pcg)
+            print('%s [%s]:' % (solver, ('SUCCESS' if succ else 'FAILED')), s)
     print()
 
 
@@ -40,12 +40,12 @@ if __name__ == '__main__':
 
     if len(sys.argv) > 3:
         cc = sys.argv[3]
-        topo = topo_reader.get_subtopo_by_country(cc)
+        topo = topo_reader.get_subtopo_by_country(cc, maximum=True)
         if len(topo):
             test_country(topo, cc, solvers)
     else:
-        countries = [cc for cc, al in reversed(topo_reader.country_stat()) if al < 50]
+        countries = [cc for cc, al in reversed(topo_reader.country_stat()) if 5 < al < 50]
         for cc in countries:
-            topo = topo_reader.get_subtopo_by_country(cc)
+            topo = topo_reader.get_subtopo_by_country(cc, maximum=True)
             if len(topo):
                 test_country(topo, cc, solvers)
