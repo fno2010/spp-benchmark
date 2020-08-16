@@ -34,7 +34,7 @@ def test_country(topo, cc, solvers, dst=None, save_dir=None):
             result['solver'][solver.lower()]['solution'] = s
             print('%s [%s in %fs]:' % (solver, ('SUCCESS' if succ else 'FAILED'), t), s)
         if save_dir is not None:
-            with open(os.path.join(save_dir, '%s-%d.pickle' % (cc, dst)), 'w') as save_f:
+            with open(os.path.join(save_dir, '%s-%d.pickle' % (cc, dst)), 'wb') as save_f:
                 pickle.dump(result, save_f)
     print()
 
@@ -68,4 +68,4 @@ if __name__ == '__main__':
         for cc in countries:
             topo = topo_reader.get_subtopo_by_country(cc, maximum=True)
             if len(topo):
-                test_country(topo, cc, solvers)
+                test_country(topo, cc, solvers, save_dir='pickle')
