@@ -32,7 +32,7 @@ def consistent_path(p, pset):
         return True
     return False
 
-class PCGraph(networkx.MultiDiGraph):
+class SGraph(networkx.MultiDiGraph):
 
     def __init__(self):
         self.topo = None
@@ -78,26 +78,26 @@ class PCGraph(networkx.MultiDiGraph):
                                     self.add_edge(cp, p, type=TYPE_CONFLICT_II)
             all_paths.extend(as_paths)
 
-class BasePCGraphSolver(object):
+class BaseSGraphSolver(object):
 
-    def __init__(self, pcgraph=None):
-        self.pcgraph = pcgraph
+    def __init__(self, sgraph=None):
+        self.sgraph = sgraph
         self.timer = None
         self.timing = False
 
-    def _solve(self, _pcgraph, enable_timer=False):
+    def _solve(self, _sgraph, enable_timer=False):
         """
         Override this method by your own implementation.
         """
         return []
 
-    def solve(self, pcgraph=None, enable_timer=False):
+    def solve(self, sgraph=None, enable_timer=False):
         """
         Solve the input pcgraph or initial pcgraph
         """
-        _pcgraph = pcgraph or self.pcgraph
-        s = self._solve(_pcgraph, enable_timer)
-        succ = len(s) == len(_pcgraph.topo)
+        _sgraph = sgraph or self.sgraph
+        s = self._solve(_sgraph, enable_timer)
+        succ = len(s) == len(_sgraph.topo)
         return s, succ, self.reset_timer()
     
     def reset_timer(self):
@@ -114,15 +114,15 @@ class BasePCGraphSolver(object):
             self.timer = time.time() - self.timer
             self.timing = False
 
-class NaivePCGraphSolver(BasePCGraphSolver):
+class NaiveSGraphSolver(BaseSGraphSolver):
 
-    def _solve(self, _pcgraph):
+    def _solve(self, _sgraph):
         """
         Find a max independent set.
         """
-        if isinstance(_pcgraph, networkx.Graph):
+        if isinstance(_sgraph, networkx.Graph):
             import igraph
-            _pg = networkx.Graph(_pcgraph)
+            _pg = networkx.Graph(_sgraph)
             _g = networkx.relabel.convert_node_labels_to_integers(_pg, label_attribute='path')
             ig = igraph.Graph(len(_g), list(_g.edges()))
             mis = ig.largest_independent_vertex_sets()
@@ -131,12 +131,12 @@ class NaivePCGraphSolver(BasePCGraphSolver):
         else:
             return
 
-class GreedySolver(BasePCGraphSolver):
+class GreedySolver(BaseSGraphSolver):
 
-    def _solve(self, _pcgraph, enable_timer=False):
+    def _solve(self, _sgraph, enable_timer=False):
         if enable_timer:
             self._start_timer()
-        _topo = _pcgraph.topo
+        _topo = _sgraph.topo
         P = {v:_topo.node[v]['as'].ranked_permitted_paths() for v in _topo.nodes()}
         pi = {_topo.dst: (_topo.dst,)}
         found = True
@@ -157,12 +157,12 @@ class GreedySolver(BasePCGraphSolver):
             self._end_timer()
         return list(pi.values())
 
-class GreedyPlusSolver(BasePCGraphSolver):
+class GreedyPlusSolver(BaseSGraphSolver):
 
-    def _solve(self, _pcgraph, enable_timer=False):
+    def _solve(self, _sgraph, enable_timer=False):
         if enable_timer:
             self._start_timer()
-        _topo = _pcgraph.topo
+        _topo = _sgraph.topo
         P = {v:_topo.node[v]['as'].ranked_permitted_paths() for v in _topo.nodes()}
         V = list(P.keys())
         V.remove(_topo.dst)
@@ -196,13 +196,13 @@ class GreedyPlusSolver(BasePCGraphSolver):
             self._end_timer()
         return [P[v][0] for v in Vi if P[v]]
 
-class GreedyPPGraphSolver(BasePCGraphSolver):
+class GreedyPPGraphSolver(BaseSGraphSolver):
 
-    def _solve(self, _pcgraph, enable_timer=False):
+    def _solve(self, _sgraph, enable_timer=False):
         import itertools
-        asnum = len(_pcgraph.topo.nodes())
+        asnum = len(_sgraph.topo.nodes())
         s = []
-        g = _pcgraph.copy()
+        g = _sgraph.copy()
         if enable_timer:
             self._start_timer()
         while len(s) < asnum and len(g.nodes()) > 0:
@@ -238,18 +238,18 @@ if __name__ == '__main__':
     from spp_benchmark.bgp import bgp_sim
     topo = example_topology()
     bgp_sim(topo)
-    pcg = PCGraph()
-    pcg.load(topo)
-    pcg.build()
+    sgraph = SGraph()
+    sgraph.load(topo)
+    sgraph.build()
     # baseline_solver = BasePCGraphSolver(pcg)
     # s = baseline_solver.solve()
     # print(s)
-    greedy_solver = GreedySolver(pcg)
+    greedy_solver = GreedySolver(sgraph)
     s = greedy_solver.solve()
     print(s)
-    greedyp_solver = GreedyPlusSolver(pcg)
+    greedyp_solver = GreedyPlusSolver(sgraph)
     s = greedyp_solver.solve()
     print(s)
-    greedypp_solver = GreedyPPGraphSolver(pcg)
+    greedypp_solver = GreedyPPGraphSolver(sgraph)
     s = greedypp_solver.solve()
     print(s)
