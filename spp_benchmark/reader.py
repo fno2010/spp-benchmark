@@ -35,23 +35,23 @@ class TopologyReader(object):
                 dst_asn = int(dst_as)
                 self.dg.add_edge(src_asn, dst_asn)
                 self.dg.add_edge(dst_asn, src_asn)
-                if not self.dg.node[src_asn].get('as'):
-                    self.dg.node[src_asn]['as'] = CustomerProviderAS(src_asn)
-                if not self.dg.node[dst_asn].get('as'):
-                    self.dg.node[dst_asn]['as'] = CustomerProviderAS(dst_asn)
+                if not self.dg._node[src_asn].get('as'):
+                    self.dg._node[src_asn]['as'] = CustomerProviderAS(src_asn)
+                if not self.dg._node[dst_asn].get('as'):
+                    self.dg._node[dst_asn]['as'] = CustomerProviderAS(dst_asn)
                 rel_type = int(rel)
                 if not rel_type:
                     self.dg.edges[src_asn, dst_asn]['relationship'] = 'pp'
-                    self.dg.node[src_asn]['as'].peers.add(dst_asn)
+                    self.dg._node[src_asn]['as'].peers.add(dst_asn)
                     self.dg.edges[dst_asn, src_asn]['relationship'] = 'pp'
-                    self.dg.node[dst_asn]['as'].peers.add(src_asn)
+                    self.dg._node[dst_asn]['as'].peers.add(src_asn)
                 else:
                     self.dg.edges[src_asn, dst_asn]['relationship'] = 'pc'
-                    self.dg.node[src_asn]['as'].customers.add(dst_asn)
+                    self.dg._node[src_asn]['as'].customers.add(dst_asn)
                     self.dg.edges[dst_asn, src_asn]['relationship'] = 'cp'
-                    self.dg.node[dst_asn]['as'].providers.add(src_asn)
+                    self.dg._node[dst_asn]['as'].providers.add(src_asn)
         if not self.dg.dst and self.dg.dst in self.dg.nodes():
-            self.dg.node[self.dg.dst]['as'].unannounced_rib.append((self.dg.dst,))
+            self.dg._node[self.dg.dst]['as'].unannounced_rib.append((self.dg.dst,))
         return self.dg
 
     def load_as_type(self, filepath):
@@ -123,8 +123,8 @@ def set_dst(dg, dst):
         return
     dg.dst = dst
     for n in dg.nodes():
-        dg.node[n]['as'].dst = dst
-    dg.node[dg.dst]['as'].unannounced_rib.append((dg.dst,))
+        dg._node[n]['as'].dst = dst
+    dg._node[dg.dst]['as'].unannounced_rib.append((dg.dst,))
 
 def safe_connected_subgraph(dg, nodes, maximum=False):
     sdg = dg.subgraph(nodes)
@@ -185,16 +185,16 @@ def example_topology():
     dg.add_edge(6, 7, relationship='cp')
     dg.add_edge(7, 6, relationship='pc')
 
-    dg.node[0]['as'] = CustomerProviderAS(0, dst=0, providers={1, 2, 3})
-    dg.node[1]['as'] = CustomerProviderAS(1, dst=0, customers={0}, providers={2, 3, 4})
-    dg.node[2]['as'] = CustomerProviderAS(2, dst=0, customers={0, 1}, providers={3, 4})
-    dg.node[3]['as'] = CustomerProviderAS(3, dst=0, customers={0, 1, 2, 5, 6}, peers={4, 7})
-    dg.node[4]['as'] = CustomerProviderAS(4, dst=0, customers={1, 2}, peers={3})
-    dg.node[5]['as'] = CustomerProviderAS(5, dst=0, customers={6}, providers={3, 7})
-    dg.node[6]['as'] = CustomerProviderAS(6, dst=0, providers={3, 5, 7})
-    dg.node[7]['as'] = CustomerProviderAS(7, dst=0, customers={5, 6}, peers={3})
+    dg._node[0]['as'] = CustomerProviderAS(0, dst=0, providers={1, 2, 3})
+    dg._node[1]['as'] = CustomerProviderAS(1, dst=0, customers={0}, providers={2, 3, 4})
+    dg._node[2]['as'] = CustomerProviderAS(2, dst=0, customers={0, 1}, providers={3, 4})
+    dg._node[3]['as'] = CustomerProviderAS(3, dst=0, customers={0, 1, 2, 5, 6}, peers={4, 7})
+    dg._node[4]['as'] = CustomerProviderAS(4, dst=0, customers={1, 2}, peers={3})
+    dg._node[5]['as'] = CustomerProviderAS(5, dst=0, customers={6}, providers={3, 7})
+    dg._node[6]['as'] = CustomerProviderAS(6, dst=0, providers={3, 5, 7})
+    dg._node[7]['as'] = CustomerProviderAS(7, dst=0, customers={5, 6}, peers={3})
 
-    dg.node[dg.dst]['as'].unannounced_rib.append((dg.dst,))
+    dg._node[dg.dst]['as'].unannounced_rib.append((dg.dst,))
     return dg
 
 def example_pcg():

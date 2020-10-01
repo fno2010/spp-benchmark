@@ -11,3 +11,6 @@ data/as-country.txt:
 	curl -sSL http://bgp.potaroo.net/cidr/autnums.html | grep '<a' | sed -E 's/^<a.*>AS([0-9]+).*, ([A-Z]+)$$/\1|\2/' > data/as-country.txt
 
 prepare: data/20200701.as-rel.txt data/20200701.as2types.txt data/as-country.txt
+
+docker:
+    docker run -it -v `pwd`:`pwd` -w `pwd` python:3.8-alpine /bin/sh

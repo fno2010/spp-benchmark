@@ -47,7 +47,7 @@ class SGraph(networkx.MultiDiGraph):
         all_paths = []
         for asn in self.topo.nodes():
             as_paths = []
-            for p in self.topo.node[asn]['as'].ranked_permitted_paths():
+            for p in self.topo._node[asn]['as'].ranked_permitted_paths():
                 self.add_node(p)
                 for pp in as_paths:
                     self.add_edge(p, pp, type=TYPE_PREFERENCE)
@@ -127,7 +127,7 @@ class NaiveSGraphSolver(BaseSGraphSolver):
             ig = igraph.Graph(len(_g), list(_g.edges()))
             mis = ig.largest_independent_vertex_sets()
             if mis:
-                return [(0,)] + [_g.node[v]['path'] for v in mis[0]]
+                return [(0,)] + [_g._node[v]['path'] for v in mis[0]]
         else:
             return
 
@@ -137,7 +137,7 @@ class GreedySolver(BaseSGraphSolver):
         if enable_timer:
             self._start_timer()
         _topo = _sgraph.topo
-        P = {v:_topo.node[v]['as'].ranked_permitted_paths() for v in _topo.nodes()}
+        P = {v:_topo._node[v]['as'].ranked_permitted_paths() for v in _topo.nodes()}
         pi = {_topo.dst: (_topo.dst,)}
         found = True
         while len(pi) < len(P) and found:
@@ -163,7 +163,7 @@ class GreedyPlusSolver(BaseSGraphSolver):
         if enable_timer:
             self._start_timer()
         _topo = _sgraph.topo
-        P = {v:_topo.node[v]['as'].ranked_permitted_paths() for v in _topo.nodes()}
+        P = {v:_topo._node[v]['as'].ranked_permitted_paths() for v in _topo.nodes()}
         V = list(P.keys())
         V.remove(_topo.dst)
         Vi = [_topo.dst]

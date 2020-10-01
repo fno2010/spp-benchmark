@@ -2,8 +2,8 @@
 import networkx as nx
 
 def advertise(G, curr, nhop, p):
-    if G.node[nhop]['as'].import_filter(p):
-        G.node[nhop]['as'].unannounced_rib.append(p)
+    if G._node[nhop]['as'].import_filter(p):
+        G._node[nhop]['as'].unannounced_rib.append(p)
         return True
     return False
 
@@ -11,14 +11,14 @@ def bgp_advertise(G, anno_cnt=0, anno_num=None):
     new_anno_cnt = anno_cnt
     stop = False
     for n in G.nodes():
-        unannounced_rib = G.node[n]['as'].unannounced_rib
-        announced_rib = G.node[n]['as'].announced_rib
+        unannounced_rib = G._node[n]['as'].unannounced_rib
+        announced_rib = G._node[n]['as'].announced_rib
         while unannounced_rib:
             p = unannounced_rib.pop()
             received = False
             for d in G.neighbors(n):
                 pp = p + (d,)
-                if G.node[n]['as'].export_filter(pp):
+                if G._node[n]['as'].export_filter(pp):
                     received = advertise(G, n, d, pp)
             announced_rib.append(p)
             if received:
