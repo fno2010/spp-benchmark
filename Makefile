@@ -12,5 +12,3 @@ data/as-country.txt:
 
 prepare: data/20200701.as-rel.txt data/20200701.as2types.txt data/as-country.txt
 
-docker:
-    docker run -it -v `pwd`:`pwd` -w `pwd` python:3.8-alpine /bin/sh
