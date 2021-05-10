@@ -35,6 +35,9 @@ def test_country(topo, cc, solvers, dst=None, save_dir=None):
         result['s-graph'] = dict()
         result['s-graph']['permitted-path-num'] = len(pcg.nodes)
         result['s-graph']['edges'] = len(pcg.edges)
+        result['s-graph']['edges-0'] = len([e for e in pcg.edges if pcg.edges[e]['type'] == 0])
+        result['s-graph']['edges-1'] = len([e for e in pcg.edges if pcg.edges[e]['type'] == 1])
+        result['s-graph']['edges-2'] = len([e for e in pcg.edges if pcg.edges[e]['type'] == 2])
         result['solver'] = dict()
         for solver in solvers:
             s, succ, t = solvers[solver].solve(pcg, enable_timer=True)
