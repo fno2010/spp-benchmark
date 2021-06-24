@@ -123,14 +123,16 @@ def plot_sgraph_dist(results):
 
     plt.savefig('permitted-path-cdf.pdf')
 
-def plot_dist(dist, log=False, xlabel=None, ylabel='CDF', save=None):
+def plot_dist(dist, bins=100000, log=False, xlabel=None, ylabel='CDF', save=None):
     fig, ax = plt.subplots()
-    ax.hist(dist, density=True, histtype='step', cumulative=True)
+    ax.hist(dist, bins=bins, density=True, histtype='step', cumulative=True)
     if log:
         ax.set_xscale('log')
     if xlabel:
         ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
+    ax.set_ylim((0, 1))
+    ax.set_xlim((0, max(dist)))
     plt.tight_layout()
 
     if save:
@@ -142,12 +144,12 @@ if __name__ == '__main__':
     results = prune_trival_result(results)
     plot_result(results)
     plot_topo_dist(results)
-    # plot_sgraph_dist(results)
+    plot_sgraph_dist(results)
     edges_0 = [r['s-graph']['edges-0'] for r in results]
     plot_dist(edges_0, log=True, xlabel='Reference Edges', save='type-reference-edges-cdf.pdf')
 
     edges_1 = [r['s-graph']['edges-1'] for r in results]
-    plot_dist(edges_0, log=True, xlabel='Type I Conflict Edges', save='type-i-conflict-edges-cdf.pdf')
+    plot_dist(edges_1, log=True, xlabel='Type I Conflict Edges', save='type-i-conflict-edges-cdf.pdf')
 
     edges_2 = [r['s-graph']['edges-2'] for r in results]
-    plot_dist(edges_0, log=True, xlabel='Type II Conflict Edges', save='type-ii-conflict-edges-cdf.pdf')
+    plot_dist(edges_2, log=True, xlabel='Type II Conflict Edges', save='type-ii-conflict-edges-cdf.pdf')
