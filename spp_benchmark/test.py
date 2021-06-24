@@ -60,13 +60,19 @@ def getArgs():
     parser.add_argument('--dst', default=None)
     parser.add_argument('--as-num-lb', type=int, default=10)
     parser.add_argument('--as-num-ub', type=int, default=50)
+    parser.add_argument('--mem-limit', type=int, default=56)
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     import sys
+    import resource
     topo_reader = TopologyReader()
     args = getArgs()
+
+    _, hard = resource.getrlimit(resource.RLIMIT_AS)
+    resource.setrlimit(resource.RLIMIT_AS, (args.mem_limit*1000*1000*1000, hard))
+
     # as_rel_f = sys.argv[1]
     # if args.as_country:
         # as_country_f = sys.argv[2]
@@ -96,7 +102,10 @@ if __name__ == '__main__':
         for cc in countries:
             topo = topo_reader.get_subtopo_by_country(cc, maximum=True)
             if len(topo):
-                test_country(topo, cc, solvers, save_dir=args.save_dir)
+                try:
+                    test_country(topo, cc, solvers, save_dir=args.save_dir)
+                except MemoryError:
+                    print('[Warn] Memory excepted')
     # else:
     #     degs = sorted(list(topo_reader.dg.degree()), key=lambda d: d[1], reverse=True)[:20]
     #     dst = degs[0][0]
